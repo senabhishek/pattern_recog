@@ -1,0 +1,37 @@
+Scenario 1: 
+- Large training set
+- Only trained once
+- Applied to field
+- At least 200 objects/class, at most 1000 objects/class
+- 5% error rate
+
+Scenario 2:
+- Small training set
+- Trained for each batch of cheques
+- At most 10 objects/class
+- 25% error rate
+
+# of classes = 10
+Total # of images/class = 2800
+Total # of images in dataset = 28000
+Pixel size/image = 128 pixels/128 pixels
+
+
+FEATURE GENERATION
+
+FEATURE SELECTION (FEATURE REDUCTION IF POSSIBLE)
+- http://www.37steps.com/prhtml/prtools.html
+
+CLASSIFIER DESIGN/CHOICE JUSTIFICATION
+- Parametric (nmc, ldc, qdc, fisherc, loglc)
+- Non-Parametric (knnc, parzenc)
+- Advanced (Neural networks, SVM, 1-class classifiers)
+
+SYSTEM EVALUATION
+
+Questions:
+1. show(a) not working on lab manual?
+2. Are we expected to write our own classifier?
+3. How do you select between pixel, feature or dissimilarity representations?
+4. regionprops gives us a feature list - What other features can we define? 
+
