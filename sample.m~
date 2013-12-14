@@ -21,3 +21,7 @@ show(img_dataset);
 prwaitbar off;
 
 %% Selecting features
+feature_set = im_features(img_dataset, {});
+
+
+
