@@ -21,12 +21,23 @@ img_dataset = prdataset(data_scaled);
 prwaitbar off;
 
 %% Feature selection
-master_featset = {'Area','EulerNumber','Orientation','BoundingBox','Extent','Perimeter','Centroid',...
-            'Extrema','PixelIdxList','ConvexArea','FilledArea','PixelList','ConvexHull',...
-            'FilledImage','Solidity','ConvexImage','SubarrayIdx','Eccentricity',...
-            'MajorAxisLength','EquivDiameter','MinorAxisLength'};
           
 working_featset = {'Area','Centroid'};         
-dataset_with_computed_features = im_features(img_dataset, working_featset);
-classifier = [fisherc qdc];
+dataset_with_computed_features = im_features(img_dataset, 'all');
+
+%% Training classifiers
+parametric_clsf = {fisherc, ldc, qdc, nmc, loglc};
+non_parametric_clsf = {knnc, parzenc};
+advanced_clsf = {svc, bpxnc};%, neurc, rnnc, dtc};
+
+[trn,tst] = gendat(dataset_with_computed_features, 0.5);
+trn_parametric_clsf = trn*parametric_clsf;
+trn_non_parametric_clsf = trn*non_parametric_clsf;
+trn_advanced_clsf = trn*advanced_clsf;
+
+%% Test classifiers
+
+tested_parametric_clsf = tst*trn_parametric_clsf*testc([]);
+tested_nonparametric_clsf = tst*trn_non_parametric_clsf*testc([]);
+tested_advanced_clsf = tst*trn_advanced_clsf*testc([]);
 
