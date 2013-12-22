@@ -14,92 +14,261 @@ data = prnist(class_vec, num_objs);
 
 %% Scale and convert to dataset
 image_size = [16 16];
-preproc = im_box([],0,1)*im_resize([],image_size)*im_box([],1,0);
+preproc = im_box([],0,1)*im_gauss*im_resize([],image_size)*im_box([],1,0);
 data_scaled = data*preproc;
 img_dataset = prdataset(data_scaled);
 prwaitbar off;
 
 %% Selecting all features
-          
+% Create dataset with all features
 dataset_with_computed_features = im_features(img_dataset, 'all');
 total_num_features = length(dataset_with_computed_features.featlab);
 
 %% Classifier list
-parametric_clsf = {fisherc, ldc, qdc, nmc, loglc};
-num_parametric_clsf = length(parametric_clsf);
+parametric_clsf = {fisherc, ldc, qdc, nmc, loglc, nmsc, quadrc, pcldc};
+advanced_clsf = {perlc, dtc};
 non_parametric_clsf = {knnc, parzenc};
+
+num_parametric_clsf = length(parametric_clsf);
 num_non_parametric_clsf = length(non_parametric_clsf);
-advanced_clsf = {dtc};
 num_advanced_clsf = length(advanced_clsf);
 
-%% Feature extraction
-norm_a = img_dataset*scalem(img_dataset, 'variance');
-[w_pca,n_pca] = pcam(norm_a);
-pca_ds = img_dataset*w_pca;
-pca_ds = +pca_ds/norm(+pca_ds);
-
-%% Split dataset
+%% Split dataset for feature selection/extraction
 % Test for different dataset sizes and pick the largest J criterion
-training_dataset_size = 0.5
-[trn_pca, tst_pca] = gendat(img_dataset, training_dataset_size);
-featsize = 5;
-mapping = scalem([], 'variance')*pcam([], featsize);
-w = trn_pca*mapping;
-trn_map = trn_pca
-[trn, tst] = gendat(img_dataset, training_dataset_size);
+training_dataset_size = 0.5;
+[trn, tst] = gendat(dataset_with_computed_features, training_dataset_size);
+[trn_pca, tst_pca] = gendat(dataset_with_computed_features, training_dataset_size);
 
-%% Feature selection
+%% Create feature selection/extraction mappings
+% Create PCA mapping and generate training and testing set for PCA
+mapping_pca = scalem([], 'variance')*pcam([], total_num_features);
+w_pca = trn_pca*mapping_pca;
+trn_pca_map = trn_pca*w_pca;
+tst_pca_map = tst_pca*w_pca;
 
-% [w(1),r(1)] = featself(trn, 'NN');
-% [w(2),r(2)] = featselb(trn, 'NN');
-% [w(3),r(3)] = featsellr(trn, 'NN');
-% [w(4),r(4)] = featselp(trn, 'NN');
-% [w(5),r(5)] = featselo(trn, 'NN');
-% Hangs on my machine!
-[wa,ra] = featself(trn_pca, 'NN', 5);
+%% Feature selection mapping and mapping train/mapping functions
 
-%% Evaluate Feature selection strategies
+feature_criterions = {'NN', 'eucl-m', 'maha-m'};
+crit = char(feature_criterions(1));
+[wf_nn, rf_nn] = featself(trn, crit, featsize);
+[wb_nn, rb_nn] = featselb(trn, crit, featsize);
+[wlr_nn, rlr_nn] = featsellr(trn, crit, featsize);
+[wp_nn, rp_nn] = featselp(trn, crit, featsize);
+trn_feat_f_nn = trn * wf_nn;
+tst_feat_f_nn = tst * wf_nn;
+trn_feat_b_nn = trn * wb_nn;
+tst_feat_b_nn = tst * wb_nn;
+trn_feat_lr_nn = trn * wlr_nn;
+tst_feat_lr_nn = tst * wlr_nn;
+trn_feat_p_nn = trn * wp_nn;
+tst_feat_p_nn = tst * wp_nn;
 
-% Use feature selection techniques to select the right features
-featnum = 1:total_num_features;
+crit = char(feature_criterions(2));
+[wf_eucl_m, rf_eucl_m] = featself(trn, crit, featsize);
+[wb_eucl_m, rb_eucl_m] = featselb(trn, crit, featsize);
+[wlr_eucl_m, rlr_eucl_m] = featsellr(trn, crit, featsize);
+[wp_eucl_m, rp_eucl_m] = featselp(trn, crit, featsize);
+trn_feat_f_eucl_m = trn * wf_eucl_m;
+tst_feat_f_eucl_m = tst * wf_eucl_m;
+trn_feat_b_eucl_m = trn * wb_eucl_m;
+tst_feat_b_eucl_m = tst * wb_eucl_m;
+trn_feat_lr_eucl_m = trn * wlr_eucl_m;
+tst_feat_lr_eucl_m = tst * wlr_eucl_m;
+trn_feat_p_eucl_m = trn * wp_eucl_m;
+tst_feat_p_eucl_m = tst * wp_eucl_m;
 
-% for i=1:num_parametric_clsf
-%   for j=1:5
-%     e_parametric_clsf(i,j) = clevalf(trn*w(j), parametric_clsf(i), featnum, size(trn,1), 1, tst*w(j));
-%   end
-% end
-% 
-% for i=1:num_non_parametric_clsf
-%   for j=1:5
-%     e_non_parametric_clsf(i,j) = clevalf(trn*w(j), non_parametric_clsf(i), featnum, size(trn,1), 1, tst*w(j));
-%   end  
-% end
-% 
-% for i=1:num_advanced_clsf
-%   for j=1:5
-%     e_advanced_clsf(i,j) = clevalf(trn*w(j), advanced_clsf(i), featnum, size(trn,1), 1, tst*w(j));
-%   end  
-% end
-% Hangs on my machine
+crit = char(feature_criterions(3));
+[wf_maha_m, rf_maha_m] = featself(trn, crit, featsize);
+[wb_maha_m, rb_maha_m] = featselb(trn, crit, featsize);
+[wlr_maha_m, rlr_maha_m] = featsellr(trn, crit, featsize);
+[wp_maha_m, rp_maha_m] = featselp(trn, crit, featsize);
+trn_feat_f_maha_m = trn * wf_maha_m;
+tst_feat_f_maha_m = tst * wf_maha_m;
+trn_feat_b_maha_m = trn * wb_maha_m;
+tst_feat_b_maha_m = tst * wb_maha_m;
+trn_feat_lr_maha_m = trn * wlr_maha_m;
+tst_feat_lr_maha_m = tst * wlr_maha_m;
+trn_feat_p_maha_m = trn * wp_maha_m;
+tst_feat_p_maha_m = tst * wp_maha_m;
 
-for i=1:num_parametric_clsf
-  e_parametric_clsf(i) = clevalf(trn, parametric_clsf(i), featnum, size(trn,1), 1, tst);
-  e_parametric_clsf_pca(i) = clevalf(trn_pca*wa, parametric_clsf(i), featnum, size(trn,1), 1, tst_pca*wa);
+prwaitbar off
+
+%% Feature selection classification analysis for each criterion, and for all classification Techniques
+for i=num_parametric_clsf:-1:1
+  e_parametric_clsf_f_nn(i) = clevalf(trn_feat_f_nn, parametric_clsf(i), featnum, size(trn_feat_f_nn,1), 1, tst_feat_f_nn);
+  e_parametric_clsf_b_nn(i) = clevalf(trn_feat_b_nn, parametric_clsf(i), featnum, size(trn_feat_b_nn,1), 1, tst_feat_b_nn);
+  e_parametric_clsf_lr_nn(i) = clevalf(trn_feat_lr_nn, parametric_clsf(i), featnum, size(trn_feat_lr_nn,1), 1, tst_feat_lr_nn);
+  e_parametric_clsf_p_nn(i) = clevalf(trn_feat_p_nn, parametric_clsf(i), featnum, size(trn_feat_p_nn,1), 1, tst_feat_p_nn);        
+  
+  e_parametric_clsf_f_eucl_m(i) = clevalf(trn_feat_f_eucl_m, parametric_clsf(i), featnum, size(trn_feat_f_eucl_m,1), 1, tst_feat_f_eucl_m);
+  e_parametric_clsf_b_eucl_m(i) = clevalf(trn_feat_b_eucl_m, parametric_clsf(i), featnum, size(trn_feat_b_eucl_m,1), 1, tst_feat_b_eucl_m);
+  e_parametric_clsf_lr_eucl_m(i) = clevalf(trn_feat_lr_eucl_m, parametric_clsf(i), featnum, size(trn_feat_lr_eucl_m,1), 1, tst_feat_lr_eucl_m);
+  e_parametric_clsf_p_eucl_m(i) = clevalf(trn_feat_p_eucl_m, parametric_clsf(i), featnum, size(trn_feat_p_eucl_m,1), 1, tst_feat_p_eucl_m);        
+  
+  e_parametric_clsf_f_maha_m(i) = clevalf(trn_feat_f_maha_m, parametric_clsf(i), featnum, size(trn_feat_f_maha_m,1), 1, tst_feat_f_maha_m);
+  e_parametric_clsf_b_maha_m(i) = clevalf(trn_feat_b_maha_m, parametric_clsf(i), featnum, size(trn_feat_b_maha_m,1), 1, tst_feat_b_maha_m);
+  e_parametric_clsf_lr_maha_m(i) = clevalf(trn_feat_lr_maha_m, parametric_clsf(i), featnum, size(trn_feat_lr_maha_m,1), 1, tst_feat_lr_maha_m);
+  e_parametric_clsf_p_maha_m(i) = clevalf(trn_feat_p_maha_m, parametric_clsf(i), featnum, size(trn_feat_p_maha_m,1), 1, tst_feat_p_maha_m);        
 end
 
-for i=1:num_non_parametric_clsf
-  e_non_parametric_clsf(i) = clevalf(trn, non_parametric_clsf(i), featnum, size(trn,1), 1, tst);
-  e_non_parametric_clsf_pca(i) = clevalf(trn_pca, non_parametric_clsf(i), featnum, size(trn,1), 1, tst_pca);
+%%
+for i=num_non_parametric_clsf:-1:1
+  e_non_parametric_clsf_f_nn(i) = clevalf(trn_feat_f_nn, parametric_clsf(i), featnum, size(trn_feat_f_nn,1), 1, tst_feat_f_nn);
+  e_non_parametric_clsf_b_nn(i) = clevalf(trn_feat_b_nn, parametric_clsf(i), featnum, size(trn_feat_b_nn,1), 1, tst_feat_b_nn);
+  e_non_parametric_clsf_lr_nn(i) = clevalf(trn_feat_lr_nn, parametric_clsf(i), featnum, size(trn_feat_lr_nn,1), 1, tst_feat_lr_nn);
+  e_non_parametric_clsf_p_nn(i) = clevalf(trn_feat_p_nn, parametric_clsf(i), featnum, size(trn_feat_p_nn,1), 1, tst_feat_p_nn);        
+  
+  e_non_parametric_clsf_f_eucl_m(i) = clevalf(trn_feat_f_eucl_m, parametric_clsf(i), featnum, size(trn_feat_f_eucl_m,1), 1, tst_feat_f_eucl_m);
+  e_non_parametric_clsf_b_eucl_m(i) = clevalf(trn_feat_b_eucl_m, parametric_clsf(i), featnum, size(trn_feat_b_eucl_m,1), 1, tst_feat_b_eucl_m);
+  e_non_parametric_clsf_lr_eucl_m(i) = clevalf(trn_feat_lr_eucl_m, parametric_clsf(i), featnum, size(trn_feat_lr_eucl_m,1), 1, tst_feat_lr_eucl_m);
+  e_non_parametric_clsf_p_eucl_m(i) = clevalf(trn_feat_p_eucl_m, parametric_clsf(i), featnum, size(trn_feat_p_eucl_m,1), 1, tst_feat_p_eucl_m);        
+  
+  e_non_parametric_clsf_f_maha_m(i) = clevalf(trn_feat_f_maha_m, parametric_clsf(i), featnum, size(trn_feat_f_maha_m,1), 1, tst_feat_f_maha_m);
+  e_non_parametric_clsf_b_maha_m(i) = clevalf(trn_feat_b_maha_m, parametric_clsf(i), featnum, size(trn_feat_b_maha_m,1), 1, tst_feat_b_maha_m);
+  e_non_parametric_clsf_lr_maha_m(i) = clevalf(trn_feat_lr_maha_m, parametric_clsf(i), featnum, size(trn_feat_lr_maha_m,1), 1, tst_feat_lr_maha_m);
+  e_non_parametric_clsf_p_maha_m(i) = clevalf(trn_feat_p_maha_m, parametric_clsf(i), featnum, size(trn_feat_p_maha_m,1), 1, tst_feat_p_maha_m);        
 end
 
-for i=1:num_advanced_clsf
-  e_advanced_clsf(i) = clevalf(trn, advanced_clsf(i), featnum, size(trn,1), 1, tst); 
-  e_advanced_clsf_pca(i) = clevalf(trn_pca, advanced_clsf(i), featnum, size(trn,1), 1, tst_pca); 
+for i=num_advanced_clsf:-1:1
+  e_advanced_clsf_f_nn(i) = clevalf(trn_feat_f_nn, parametric_clsf(i), featnum, size(trn_feat_f_nn,1), 1, tst_feat_f_nn);
+  e_advanced_clsf_b_nn(i) = clevalf(trn_feat_b_nn, parametric_clsf(i), featnum, size(trn_feat_b_nn,1), 1, tst_feat_b_nn);
+  e_advanced_clsf_lr_nn(i) = clevalf(trn_feat_lr_nn, parametric_clsf(i), featnum, size(trn_feat_lr_nn,1), 1, tst_feat_lr_nn);
+  e_advanced_clsf_p_nn(i) = clevalf(trn_feat_p_nn, parametric_clsf(i), featnum, size(trn_feat_p_nn,1), 1, tst_feat_p_nn);        
+  
+  e_advanced_clsf_f_eucl_m(i) = clevalf(trn_feat_f_eucl_m, parametric_clsf(i), featnum, size(trn_feat_f_eucl_m,1), 1, tst_feat_f_eucl_m);
+  e_advanced_clsf_b_eucl_m(i) = clevalf(trn_feat_b_eucl_m, parametric_clsf(i), featnum, size(trn_feat_b_eucl_m,1), 1, tst_feat_b_eucl_m);
+  e_advanced_clsf_lr_eucl_m(i) = clevalf(trn_feat_lr_eucl_m, parametric_clsf(i), featnum, size(trn_feat_lr_eucl_m,1), 1, tst_feat_lr_eucl_m);
+  e_advanced_clsf_p_eucl_m(i) = clevalf(trn_feat_p_eucl_m, parametric_clsf(i), featnum, size(trn_feat_p_eucl_m,1), 1, tst_feat_p_eucl_m);        
+  
+  e_advanced_clsf_f_maha_m(i) = clevalf(trn_feat_f_maha_m, parametric_clsf(i), featnum, size(trn_feat_f_maha_m,1), 1, tst_feat_f_maha_m);
+  e_advanced_clsf_b_maha_m(i) = clevalf(trn_feat_b_maha_m, parametric_clsf(i), featnum, size(trn_feat_b_maha_m,1), 1, tst_feat_b_maha_m);
+  e_advanced_clsf_lr_maha_m(i) = clevalf(trn_feat_lr_maha_m, parametric_clsf(i), featnum, size(trn_feat_lr_maha_m,1), 1, tst_feat_lr_maha_m);
+  e_advanced_clsf_p_maha_m(i) = clevalf(trn_feat_p_maha_m, parametric_clsf(i), featnum, size(trn_feat_p_maha_m,1), 1, tst_feat_p_maha_m);  
 end
 
+%% Feature extraction (PCA) classification analysis
+for i=num_parametric_clsf:-1:1
+  e_parametric_clsf_pca(i) = clevalf(trn_pca_map, parametric_clsf(i), featnum, size(trn,1), 1, tst_pca_map);
+end
+
+for i=num_non_parametric_clsf:-1:1
+  e_non_parametric_clsf_pca(i) = clevalf(trn_pca_map, non_parametric_clsf(i), featnum, size(trn,1), 1, tst_pca_map);
+end
+
+for i=num_advanced_clsf:-1:1
+  e_advanced_clsf_pca(i) = clevalf(trn_pca_map, advanced_clsf(i), featnum, size(trn,1), 1, tst_pca_map); 
+end
+
+%% Plot error curves (PCA)
+figure(1);
+parametric_clsf_pca_e_plot = plote(e_parametric_clsf_pca);
+figure(2);
+non_parametric_clsf_pca_e_plot = plote(e_non_parametric_clsf_pca);
+figure(3);
+advanced_clsf_pca_e_plot = plote(e_advanced_clsf_pca);
+
+%% Plot error curves (Feature selection + classifier)
+
+%% Parametric
+close all;
+
+% NN
+figure(4);
+plote(e_parametric_clsf_f_nn);
+figure(5);
+plote(e_parametric_clsf_b_nn);
+figure(6);
+plote(e_parametric_clsf_lr_nn);
+figure(7);
+plote(e_parametric_clsf_p_nn);
+
+% Eucl-m
+figure(8);
+plote(e_parametric_clsf_f_eucl_m);
+figure(9);
+plote(e_parametric_clsf_b_eucl_m);
+figure(10);
+plote(e_parametric_clsf_lr_eucl_m);
+figure(11);
+plote(e_parametric_clsf_p_eucl_m);
+
+% Maha-m
+figure(8);
+plote(e_parametric_clsf_f_maha_m);
+figure(9);
+plote(e_parametric_clsf_b_maha_m);
+figure(10);
+plote(e_parametric_clsf_lr_maha_m);
+figure(11);
+plote(e_parametric_clsf_p_maha_m);
+
+%% Non-Parametric
+close all;
+
+% NN
+figure(12);
+plote(e_non_parametric_clsf_f_nn);
+figure(13);
+plote(e_non_parametric_clsf_b_nn);
+figure(14);
+plote(e_non_parametric_clsf_lr_nn);
+figure(15);
+plote(e_non_parametric_clsf_p_nn);
+
+% Eucl-m
+figure(16);
+plote(e_non_parametric_clsf_f_eucl_m);
+figure(17);
+plote(e_non_parametric_clsf_b_eucl_m);
+figure(18);
+plote(e_non_parametric_clsf_lr_eucl_m);
+figure(19);
+plote(e_non_parametric_clsf_p_eucl_m);
+
+% Maha-m
+figure(20);
+plote(e_non_parametric_clsf_f_maha_m);
+figure(21);
+plote(e_non_parametric_clsf_b_maha_m);
+figure(22);
+plote(e_non_parametric_clsf_lr_maha_m);
+figure(23);
+plote(e_non_parametric_clsf_p_maha_m);
+
+%% Advanced
+close all;
+
+% NN
+figure();
+plote(e_non_parametric_clsf_f_nn);
+figure(13);
+plote(e_non_parametric_clsf_b_nn);
+figure(14);
+plote(e_non_parametric_clsf_lr_nn);
+figure(15);
+plote(e_non_parametric_clsf_p_nn);
+
+% Eucl-m
+figure(16);
+plote(e_non_parametric_clsf_f_eucl_m);
+figure(17);
+plote(e_non_parametric_clsf_b_eucl_m);
+figure(18);
+plote(e_non_parametric_clsf_lr_eucl_m);
+figure(19);
+plote(e_non_parametric_clsf_p_eucl_m);
+
+% Maha-m
+figure(20);
+plote(e_non_parametric_clsf_f_maha_m);
+figure(21);
+plote(e_non_parametric_clsf_b_maha_m);
+figure(22);
+plote(e_non_parametric_clsf_lr_maha_m);
+figure(23);
+plote(e_non_parametric_clsf_p_maha_m);
 
 %% Training classifiers
-
 
 trn_parametric_clsf = trn*parametric_clsf;
 % trn_non_parametric_clsf = trn*non_parametric_clsf;
