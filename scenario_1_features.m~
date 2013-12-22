@@ -26,24 +26,27 @@ total_num_features = length(dataset_with_computed_features.featlab);
 
 %% Classifier list
 parametric_clsf = {fisherc, ldc, qdc, nmc, loglc};
-advanced_clsf = {dtc};
-non_parametric_clsf = {knnc, parzenc};
 num_parametric_clsf = length(parametric_clsf);
+non_parametric_clsf = {knnc, parzenc};
 num_non_parametric_clsf = length(non_parametric_clsf);
+advanced_clsf = {dtc};
 num_advanced_clsf = length(advanced_clsf);
 
-%% Split dataset for feature selection/extraction
+%% Feature extraction
+norm_a = img_dataset*scalem(img_dataset, 'variance');
+[w_pca,n_pca] = pcam(norm_a);
+pca_ds = img_dataset*w_pca;
+pca_ds = +pca_ds/norm(+pca_ds);
+
+%% Split dataset
 % Test for different dataset sizes and pick the largest J criterion
 training_dataset_size = 0.5
-[trn, tst] = gendat(img_dataset, training_dataset_size);
-
-% Create PCA mapping and generate training and testing set for PCA
 [trn_pca, tst_pca] = gendat(img_dataset, training_dataset_size);
-featsize = total_num_features;
+featsize = 5;
 mapping = scalem([], 'variance')*pcam([], featsize);
-w_pca = trn_pca*mapping;
-trn_pca_map = trn_pca*w_pca;
-tst_pca_map = tst_pca*w_pca;
+w = trn_pca*mapping;
+trn_map = trn_pca
+[trn, tst] = gendat(img_dataset, training_dataset_size);
 
 %% Feature selection
 
@@ -52,7 +55,8 @@ tst_pca_map = tst_pca*w_pca;
 % [w(3),r(3)] = featsellr(trn, 'NN');
 % [w(4),r(4)] = featselp(trn, 'NN');
 % [w(5),r(5)] = featselo(trn, 'NN');
-% Hangs on my machine!!!
+% Hangs on my machine!
+[wa,ra] = featself(trn_pca, 'NN', 5);
 
 %% Evaluate Feature selection strategies
 
@@ -76,21 +80,21 @@ featnum = 1:total_num_features;
 %     e_advanced_clsf(i,j) = clevalf(trn*w(j), advanced_clsf(i), featnum, size(trn,1), 1, tst*w(j));
 %   end  
 % end
-% Hangs on my machine!!!
+% Hangs on my machine
 
 for i=1:num_parametric_clsf
   e_parametric_clsf(i) = clevalf(trn, parametric_clsf(i), featnum, size(trn,1), 1, tst);
-  e_parametric_clsf_pca(i) = clevalf(trn_pca_map, parametric_clsf(i), featnum, size(trn,1), 1, tst_pca_map);
+  e_parametric_clsf_pca(i) = clevalf(trn_pca*wa, parametric_clsf(i), featnum, size(trn,1), 1, tst_pca*wa);
 end
 
 for i=1:num_non_parametric_clsf
   e_non_parametric_clsf(i) = clevalf(trn, non_parametric_clsf(i), featnum, size(trn,1), 1, tst);
-  e_non_parametric_clsf_pca(i) = clevalf(trn_pca_map, non_parametric_clsf(i), featnum, size(trn,1), 1, tst_pca_map);
+  e_non_parametric_clsf_pca(i) = clevalf(trn_pca, non_parametric_clsf(i), featnum, size(trn,1), 1, tst_pca);
 end
 
 for i=1:num_advanced_clsf
   e_advanced_clsf(i) = clevalf(trn, advanced_clsf(i), featnum, size(trn,1), 1, tst); 
-  e_advanced_clsf_pca(i) = clevalf(trn_pca_map, advanced_clsf(i), featnum, size(trn,1), 1, tst_pca_map); 
+  e_advanced_clsf_pca(i) = clevalf(trn_pca, advanced_clsf(i), featnum, size(trn,1), 1, tst_pca); 
 end
 
 
