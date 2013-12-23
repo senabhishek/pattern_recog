@@ -27,7 +27,7 @@ total_num_features = length(dataset_with_computed_features.featlab);
 %% Classifier list
 parametric_clsf = {fisherc, ldc, qdc, nmc, loglc, nmsc, quadrc, pcldc};
 advanced_clsf = {dtc};
-non_parametric_clsf = {knnc, parzenc};
+non_parametric_clsf = {svc, knnc, parzenc, parzendc};
 
 num_parametric_clsf = length(parametric_clsf);
 num_non_parametric_clsf = length(non_parametric_clsf);
@@ -94,7 +94,7 @@ tst_feat_p_maha_m = tst * wp_maha_m;
 prwaitbar off
 
 %% Feature selection classification analysis for each criterion, and for all classification Techniques
-
+               
 for i=num_parametric_clsf:-1:1
   e_parametric_clsf_f_nn(i) = clevalf(trn_feat_f_nn, parametric_clsf(i), featnum, size(trn_feat_f_nn,1), 1, tst_feat_f_nn);
   e_parametric_clsf_b_nn(i) = clevalf(trn_feat_b_nn, parametric_clsf(i), featnum, size(trn_feat_b_nn,1), 1, tst_feat_b_nn);
@@ -111,7 +111,7 @@ for i=num_parametric_clsf:-1:1
   e_parametric_clsf_lr_maha_m(i) = clevalf(trn_feat_lr_maha_m, parametric_clsf(i), featnum, size(trn_feat_lr_maha_m,1), 1, tst_feat_lr_maha_m);
   e_parametric_clsf_p_maha_m(i) = clevalf(trn_feat_p_maha_m, parametric_clsf(i), featnum, size(trn_feat_p_maha_m,1), 1, tst_feat_p_maha_m);        
 end
-
+%%
 for i=num_non_parametric_clsf:-1:1
   e_non_parametric_clsf_f_nn(i) = clevalf(trn_feat_f_nn, non_parametric_clsf(i), featnum, size(trn_feat_f_nn,1), 1, tst_feat_f_nn);
   e_non_parametric_clsf_b_nn(i) = clevalf(trn_feat_b_nn, non_parametric_clsf(i), featnum, size(trn_feat_b_nn,1), 1, tst_feat_b_nn);
@@ -128,7 +128,7 @@ for i=num_non_parametric_clsf:-1:1
   e_non_parametric_clsf_lr_maha_m(i) = clevalf(trn_feat_lr_maha_m, non_parametric_clsf(i), featnum, size(trn_feat_lr_maha_m,1), 1, tst_feat_lr_maha_m);
   e_non_parametric_clsf_p_maha_m(i) = clevalf(trn_feat_p_maha_m, non_parametric_clsf(i), featnum, size(trn_feat_p_maha_m,1), 1, tst_feat_p_maha_m);        
 end
-
+%%
 for i=num_advanced_clsf:-1:1
   e_advanced_clsf_f_nn(i) = clevalf(trn_feat_f_nn, advanced_clsf(i), featnum, size(trn_feat_f_nn,1), 1, tst_feat_f_nn);
   e_advanced_clsf_b_nn(i) = clevalf(trn_feat_b_nn, advanced_clsf(i), featnum, size(trn_feat_b_nn,1), 1, tst_feat_b_nn);
@@ -158,6 +158,47 @@ end
 
 for i=num_advanced_clsf:-1:1
   e_advanced_clsf_pca(i) = clevalf(trn_pca_map, advanced_clsf(i), featnum, size(trn,1), 1, tst_pca_map); 
+end
+
+%% Find minimum classification error for all classifiers
+min_parametric_clsf_error = 1;
+
+e_parametric = [e_parametric_clsf_f_nn e_parametric_clsf_b_nn e_parametric_clsf_lr_nn ...
+                e_parametric_clsf_f_eucl_m e_parametric_clsf_b_eucl_m e_parametric_clsf_lr_eucl_m e_parametric_clsf_p_eucl_m ...
+                e_parametric_clsf_f_maha_m e_parametric_clsf_b_maha_m e_parametric_clsf_lr_maha_m e_parametric_clsf_p_maha_m];
+
+e_non_parametric = [e_non_parametric_clsf_f_nn e_non_parametric_clsf_b_nn e_non_parametric_clsf_lr_nn ...
+                    e_non_parametric_clsf_f_eucl_m e_non_parametric_clsf_b_eucl_m e_non_parametric_clsf_lr_eucl_m e_non_parametric_clsf_p_eucl_m ...
+                    e_non_parametric_clsf_f_maha_m e_non_parametric_clsf_b_maha_m e_non_parametric_clsf_lr_maha_m e_non_parametric_clsf_p_maha_m];
+
+e_advanced = [e_advanced_clsf_f_nn e_advanced_clsf_b_nn e_advanced_clsf_lr_nn ...
+              e_advanced_clsf_f_eucl_m e_advanced_clsf_b_eucl_m e_advanced_clsf_lr_eucl_m e_advanced_clsf_p_eucl_m ...
+              e_advanced_clsf_f_maha_m e_advanced_clsf_b_maha_m e_advanced_clsf_lr_maha_m e_advanced_clsf_p_maha_m];
+
+e_crit_nn = [e_parametric_clsf_p_nn e_non_parametric_clsf_p_nn e_advanced_clsf_p_nn];
+
+[e_crit_nn_min, e_crit_nn_min_featsize, e_crit_nn_min_index] = find_minimum_error(e_crit_nn);
+[e_parametric_pca_min, e_parametric_pca_min_featsize, e_parametric_pca_index] = find_minimum_error(e_parametric_clsf_pca);
+[e_non_parametric_pca_min, e_non_parametric_pca_min_featsize, e_non_parametric_pca_index] = find_minimum_error(e_non_parametric_clsf_pca);
+[e_advanced_pca_min, e_advanced_pca_min_featsize, e_advanced_pca_index] = find_minimum_error(e_advanced_clsf_pca);
+[e_parametric_min, e_parametric_min_featsize, e_parametric_index] = find_minimum_error(e_parametric);
+[e_non_parametric_min, e_non_parametric_min_featsize, e_non_parametric_index] = find_minimum_error(e_non_parametric);
+[e_advanced_min, e_advanced_featsize, e_advanced_index] = find_minimum_error(e_advanced);
+
+e_min = [e_parametric_clsf_pca(e_parametric_pca_index) ...
+          e_non_parametric_clsf_pca(e_non_parametric_pca_index) ...
+          e_advanced_clsf_pca(e_advanced_pca_index) ...
+          e_parametric(e_parametric_index) ...
+          e_non_parametric(e_non_parametric_index) ...
+          e_advanced(e_advanced_index)];
+
+[e_overall_min, e_overall_min_featsize, e_overall_min_index] = find_minimum_error(e_min);
+
+if (e_crit_nn_min < e_overall_min)
+  overall_min_achieved_with_crit_nn = true;
+  e_overall_min = e_crit_nn_min;
+  e_overall_min_featsize = e_crit_nn_min_featsize;
+  e_overall_min_index = e_crit_nn_min_index;
 end
 
 %% Plot error curves (PCA)

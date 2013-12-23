@@ -35,7 +35,7 @@ num_advanced_clsf = length(advanced_clsf);
 
 %% Split dataset for feature selection/extraction
 % Test for different dataset sizes and pick the largest J criterion
-training_dataset_size = 0.5;
+training_dataset_size = 0.05;
 [trn, tst] = gendat(dataset_with_computed_features, training_dataset_size);
 [trn_pca, tst_pca] = gendat(dataset_with_computed_features, training_dataset_size);
 
