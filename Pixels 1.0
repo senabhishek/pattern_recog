@@ -1,0 +1,289 @@
+%{
+Pattern recognition project
+Using pixel space as feature space in two scenarios:
+        
+        -Small classes
+        -Large classes
+
+%}
+
+%%prnist with large classes
+
+a=prnist([0:9],[1:200]); %choose a large class size (more than 200 objects per class
+figure(1);
+show(a);
+%pause(5);
+close figure 1;
+b=im_box(a,1,1); %add box surrounding all digits to enable the same number
+                 %of features on all images
+figure(2);
+show(b);
+%pause(5);
+close figure 2;
+c=im_resize(b,[40 40]);  %resize all the data to 32 pixels (32^2 features), 
+                         %feature extraction needed
+figure(3);
+show(c);
+%pause(5);
+close figure 3;
+d=prdataset(c); %working dataset
+
+len=length(d);
+nrep = 4; %number of repetitions for the classifier evaluations.
+
+%Supervised classification
+%{
+
+quadclass=qdc(d); %Quadratic Bayes
+linclass=ldc(d); %Linear Bayes
+nmclass=nmc(d); %nearest mean
+knnclass=knnc(d,10); %k nearest neighboor (k=10)
+pznclass=parzenc(d,15);%parzen classifier
+svmclass=svc(d);%support vector machine
+
+%classifier evaluations
+
+Eqdc=cleval(d,qdc,[32,64,128,len*0.5],nrep);
+Eldc=cleval(d,ldc,[32,64,128,len*0.5],nrep);
+Enmc=cleval(d,nmc,[32,64,128,len*0.5],nrep);
+Eknn=cleval(d,knnc,[32,64,128,len*0.5],nrep);
+Epzn=cleval(d,parzenc,[32,64,128,len*0.5],nrep);
+Esvc=cleval(d,svc,[32,64,128,len*0.5],nrep);
+
+%New test set from nist dataset.
+
+Test1=prnist([0:9],[1:100]);
+figure(4);
+show(Test1);
+pause(5);
+close figure 4;
+Test1=im_box(Test1,1,1); 
+                 
+figure(5);
+show(Test1);
+pause(5);
+close figure 5;
+Test1=im_resize(Test1,[64 64]);  
+                        
+figure(6);
+show(Test1);
+pause(5);
+close figure 6;
+Test1=prdataset(Test1); %Test dataset
+
+%Using testc to assess error. 
+
+[Eqdc1,C1] = testc(Test1,quadclass);
+[Eldc1,C2] = testc(Test1,linclass);
+[Enmc1,C3] = testc(Test1,nmclass);
+[Eknn1,C4] = testc(Test1,knnclass);
+[Epzn1,C5] = testc(Test1,pznclass);
+[Esvc1,C6] = testc(Test1,svmclass);
+
+%also check the other types of tests for "testc": AUC for example
+
+%{
+Feature options for im_features
+
+'Area'              'EulerNumber'       'Orientation'               
+      'BoundingBox'       'Extent'            'Perimeter'          
+      'Centroid'          'Extrema'           'PixelIdxList' 
+      'ConvexArea'        'FilledArea'        'PixelList'
+      'ConvexHull'        'FilledImage'       'Solidity' 
+      'ConvexImage'       'Image'             'SubarrayIdx'            
+      'Eccentricity'      'MajorAxisLength' 
+      'EquivDiameter'     'MinorAxisLength'        
+
+
+%}
+
+%}
+
+%%
+%Feature extraction
+
+dSc=d*scalem(d,'variance');%scaling of the features
+
+[W1,frac]=pcam(d,64); %PCA on the original dataset. Maybe a smaller N would help.
+e=dSc*W1; %projecting d on W1 for dim reduction
+
+quadclass2=qdc(e); %Quadratic Bayes
+linclass2=ldc(e); %Linear Bayes
+nmclass2=nmc(e); %nearest mean
+%knnclass2=knnc(e,10); %k nearest neighboor (k=10)
+pznclass2=parzenc(e,15);%parzen classifier
+%svmclass2=svc(e);%support vector machine
+
+%classifier evaluations
+
+Eqdc2=cleval(e,qdc,[32,64,128,256,len*0.5],nrep);
+Eldc2=cleval(e,ldc,[32,64,128,256,len*0.5],nrep);
+Enmc2=cleval(e,nmc,[32,64,128,256,len*0.5],nrep);
+%Eknn2=cleval(e,knnc,[32,64,128,256,len*0.5],nrep);
+Epzn2=cleval(e,parzenc,[32,64,128,256,len*0.5],nrep);
+%Esvc2=cleval(e,svc,[32,64,128,256,len*0.5],nrep);
+
+%-----------------------------------
+
+[W2,frac2]=pcam(d,32); %PCA on the original dataset. 
+f=dSc*W2; %projecting d on W1 for dim reduction
+
+quadclass3=qdc(f); %Quadratic Bayes
+linclass3=ldc(f); %Linear Bayes
+nmclass3=nmc(f); %nearest mean
+%knnclass3=knnc(f,10); %k nearest neighboor (k=10)
+pznclass3=parzenc(f,15);%parzen classifier
+%svmclass3=svc(f);%support vector machine
+
+%classifier evaluations
+
+Eqdc3=cleval(f,qdc,[32,64,128,256,len*0.5],nrep);
+Eldc3=cleval(f,ldc,[32,64,128,256,len*0.5],nrep);
+Enmc3=cleval(f,nmc,[32,64,128,256,len*0.5],nrep);
+%Eknn3=cleval(f,knnc,[32,64,128,256,len*0.5],nrep);
+Epzn3=cleval(f,parzenc,[32,64,128,256,len*0.5],nrep);
+%Esvc3=cleval(f,svc,[32,64,128,256,len*0.5],nrep);
+
+
+%%
+%Feature selection(featself, etc)
+
+[W3,R3] = featself(d,'NN',20);
+%[W4,R4] = featselb(d,'NN',50);
+[W5,R5] = featsellr(d,'NN',20);
+
+Wlc={W3,W5};
+
+%g=d*W3;
+
+%classifier evaluations
+
+for i=1:2
+
+Eqdc4(i)=cleval(d*Wlc(i),qdc,[32,64,128,len*0.5],nrep);
+Eldc4(i)=cleval(d*Wlc(i),ldc,[32,64,128,len*0.5],nrep);
+Enmc4(i)=cleval(d*Wlc(i),nmc,[32,64,128,len*0.5],nrep);
+%Eknn4(i)=cleval(d*Wlc(i),knnc,[32,64,128,len*0.5,nrep]);
+Epzn4(i)=cleval(d*Wlc(i),parzenc,[32,64,128,len*0.5],nrep);
+%Esvc4(i)=cleval(d*Wlc(i),svc,[32,64,128,len*0.5],nrep);
+
+end
+
+%%
+%\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+%New test set from nist dataset using a smaller class size
+
+Test1=prnist([0:9],[1:10]);
+figure(4);
+show(Test1);
+pause(5);
+close figure 4;
+Test1=im_box(Test1,1,1); 
+                 
+figure(5);
+show(Test1);
+pause(5);
+close figure 5;
+Test1=im_resize(Test1,[64 64]);  
+                        
+figure(6);
+show(Test1);
+pause(5);
+close figure 6;
+Test1=prdataset(Test1); %Test dataset
+
+quadclass4=qdc(Test1); %Quadratic Bayes
+linclass4=ldc(Test1); %Linear Bayes
+nmclass4=nmc(Test1); %nearest mean
+%knnclass2=knnc(e,10); %k nearest neighboor (k=10)
+pznclass4=parzenc(Test1,0.5);%parzen classifier
+%svmclass2=svc(e);%support vector machine
+
+%-----------------
+
+Test2=prnist([0:9],[1:10:1500]);
+figure(4);
+show(Test2);
+pause(5);
+close figure 4;
+Test2=im_box(Test1,1,1); 
+                 
+figure(5);
+show(Test2);
+pause(5);
+close figure 5;
+Test2=im_resize(Test2,[64 64]);  
+                        
+figure(6);
+show(Test2);
+pause(5);
+close figure 6;
+Test2=prdataset(Test2); %Test dataset
+
+%-------------------
+
+%Using testc to assess error. 
+
+[Eqdc5,C1] = testc(Test2,quadclass4,'AUC');
+[Eldc5,C2] = testc(Test2,linclass4,'AUC');
+[Enmc5,C3] = testc(Test2,nmclass4,'AUC');
+%[Eknn5,C4] = testc(Test1,knnclass4);
+[Epzn5,C5] = testc(Test2,pznclass4,'AUC');
+%[Esvc5,C6] = testc(Test1,svmclass4);
+
+%%
+
+%no feature selection or extraction
+
+len2=length(Test1);
+
+Eqdc6=cleval(Test1,qdc,[20,30,40,len2*0.5],nrep);
+Eldc6=cleval(Test1,ldc,[20,30,40,len2*0.5],nrep);
+Enmc6=cleval(Test1,nmc,[20,30,40,len2*0.5],nrep);
+%Eknn6=cleval(Test1,knnc,[20,30,40,len2*0.5],nrep);
+Epzn6=cleval(Test1,parzenc,[20,30,40,len2*0.5],nrep);
+%Esvc6=cleval(Test1,svc,[20,30,40,len2*0.5],nrep);
+
+%feature selection
+
+[W6,R6]= featself(Test1,'NN',20);
+%[W7,R7]= featselb(Test1,'NN',20);
+
+Wsc={W6,W7};
+
+%{
+
+for j=1:2
+    
+    E6(j)=clevalf(Test1*Wsc(j),qdc,[len2*0.10,len2*0.25,len2*0.5,len2*0.75]);
+    E7(j)=clevalf(Test1*Wsc(j),parzenc,[len2*0.10,len2*0.25,len2*0.5,len2*0.75]);
+    
+end
+
+%}  
+  
+ E6=clevalf(Test1*W6,qdc,[len2*0.10,len2*0.25,len2*0.5,len2*0.75]);
+ E7=clevalf(Test1*W6,parzenc,[len2*0.10,len2*0.25,len2*0.5,len2*0.75]);
+
+%feature extraction
+
+[W8,frac8]=pcam(Test1,32); %PCA on the original dataset. 
+
+Eqdc8=cleval(Test1*W8,qdc,[20,30,40,len2*0.5],nrep);
+Eldc8=cleval(Test1*W8,ldc,[20,30,40,len2*0.5],nrep);
+Enmc8=cleval(Test1*W8,nmc,[20,30,40,len2*0.5],nrep);
+%Eknn8=cleval(Test1*W8,knnc,[20,30,40,len2*0.5],nrep);
+Epzn8=cleval(Test1*W8,parzenc,[20,30,40,len2*0.5],nrep);
+%Esvc8=cleval(Test1*W8,svc,[20,30,40,len2*0.5],nrep);
+
+[W8,frac8]=pcam(Test1,32); %PCA on the original dataset. 
+
+Eqdc8=cleval(Test1*W8,qdc,[20,30,40,len2*0.5],nrep);
+Eldc8=cleval(Test1*W8,ldc,[20,30,40,len2*0.5],nrep);
+Enmc8=cleval(Test1*W8,nmc,[20,30,40,len2*0.5],nrep);
+Eknn8=cleval(Test1*W8,knnc,[20,30,40,len2*0.5],nrep);
+Epzn8=cleval(Test1*W8,parzenc,[20,30,40,len2*0.5],nrep);
+Esvc8=cleval(Test1*W8,svc,[20,30,40,len2*0.5],nrep);
+
+
+
