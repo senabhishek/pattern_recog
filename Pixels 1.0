@@ -281,7 +281,9 @@ Epzn8=cleval(Test1*W8,parzenc,[20,30,40,len2*0.5],nrep);
 Eqdc8=cleval(Test1*W8,qdc,[20,30,40,len2*0.5],nrep);
 Eldc8=cleval(Test1*W8,ldc,[20,30,40,len2*0.5],nrep);
 Enmc8=cleval(Test1*W8,nmc,[20,30,40,len2*0.5],nrep);
-%Eknn8=cleval(Test1*W8,knnc,[20,30,40,len2*0.5],nrep);
+Eknn8=cleval(Test1*W8,knnc,[20,30,40,len2*0.5],nrep);
 Epzn8=cleval(Test1*W8,parzenc,[20,30,40,len2*0.5],nrep);
 Esvc8=cleval(Test1*W8,svc,[20,30,40,len2*0.5],nrep);
+
+
 
