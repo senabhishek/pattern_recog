@@ -12,7 +12,7 @@
 %prnist with large classes*
 %**************************
 
-a=prnist([0:9],[1:400]); %choose a large class size (more than 200 objects per class
+a=prnist([0:9],[1:500]); %choose a large class size (more than 200 objects per class
 %figure(1);
 %%show(a);
 %pause(5);
@@ -50,8 +50,8 @@ pznclass=parzenc(d,15);%parzen classifier
 
 %classifier evaluations
 
-%Eqdc=cleval(d,qdc,[32,64,128,len*0.5],nrep);
-Eldc=cleval(d,ldc,[32,64,128,len*0.5],nrep);
+Eqdc=cleval(d,qdc,[32,64,128,len*0.5],nrep);
+%Eldc=cleval(d,ldc,[32,64,128,len*0.5],nrep);
 Enmc=cleval(d,nmc,[32,64,128,len*0.5],nrep);
 Eknn=cleval(d,knnc,[32,64,128,len*0.5],nrep);
 Epzn=cleval(d,parzenc,[32,64,128,len*0.5],nrep);
@@ -94,7 +94,7 @@ pznclass2=parzenc(e,15);%parzen classifier
 Testset=prnist(0:9,500:999); %Test set
 Testset=prdataset(Testset*improc);
 [Wtest1,ftest1]=pcam(Testset,64);
-Testset1=Testset*Wtest;
+Testset1=Testset*Wtest1;
 
 %classifier evaluations
 
@@ -178,19 +178,24 @@ prcrossval(f,{Seq32_1,Seq32_2},10,2);
 
 
 %%
-%Feature selection(featself, etc)
+%*********************************
+%Feature selection(featself, etc)*
+%*********************************
 
+%{
 [W3,R3] = featself(dSc,'NN',20);
 %[W4,R4] = featselb(dSc,'NN',50);
 [W5,R5] = featsellr(dSc,'NN',20);
 
-Wlc={W3,W5};
+Wlc={W5};
 
 %g=d*W3;
 
 %classifier evaluations
 
-for i=1:2
+
+
+for i=1%:2
 
 Eqdc4(i)=cleval(dSc*Wlc(i),qdc,[32,64,128,len*0.5],nrep);
 Eldc4(i)=cleval(dSc*Wlc(i),ldc,[32,64,128,len*0.5],nrep);
@@ -200,7 +205,7 @@ Epzn4(i)=cleval(dSc*Wlc(i),parzenc,[32,64,128,len*0.5],nrep);
 %Esvc4(i)=cleval(dSc*Wlc(i),svc,[32,64,128,len*0.5],nrep);
 
 end
-
+%}
 
 %%
 %***********************************************************************
@@ -262,12 +267,12 @@ SDS2=prdataset(SDS2); %Test dataset
 
 %Using testc to assess error. 
 
-[Eqdc5,C1] = testc(SDS2,quadclass4,'AUC');
-[Eldc5,C2] = testc(SDS2,linclass4,'AUC');
-[Enmc5,C3] = testc(SDS2,nmclass4,'AUC');
-%[Eknn5,C4] = testc(Test1,knnclass4);
-[Epzn5,C5] = testc(SDS2,pznclass4,'AUC');
-%[Esvc5,C6] = testc(Test1,svmclass4);
+testc(SDS2,quadclass4,'AUC');
+testc(SDS2,linclass4,'AUC');
+testc(SDS2,nmclass4,'AUC');
+%testc(Test1,knnclass4);
+testc(SDS2,pznclass4,'AUC');
+%testc(Test1,svmclass4);
 
 %%
 
@@ -284,11 +289,12 @@ Esvc6=cleval(SDS1,svc,[20,30,40,len2*0.5],nrep);
 
 %feature selection
 
-[W6,R6]= featself(SDS1,'NN',20);
-%[W7,R7]= featselb(Test1,'NN',20);
-
-Wsc={W6,W7};
-
+% [W6,R6]= featself(SDS1,'NN',20);
+% %[W7,R7]= featselb(Test1,'NN',20);
+% 
+% Wsc={W6,W7};
+% 
+% 
 %{
 
 for j=1:2
@@ -300,8 +306,8 @@ end
 
 %}  
   
- E6=clevalf(SDS1*W6,qdc);
- E7=clevalf(SDS1*W6,parzenc); %plote to graph the error/featuresize curve.
+%  E6=clevalf(SDS1*W6,qdc);
+%  E7=clevalf(SDS1*W6,parzenc); %plote to graph the error/featuresize curve.
  
 
 %feature extraction
@@ -323,7 +329,4 @@ Enmc8=cleval(SDS1*W8,nmc,[20,30,40,len2*0.5],nrep);
 Eknn8=cleval(SDS1*W8,knnc,[20,30,40,len2*0.5],nrep);
 Epzn8=cleval(SDS1*W8,parzenc,[20,30,40,len2*0.5],nrep);
 Esvc8=cleval(SDS1*W8,svc,[20,30,40,len2*0.5],nrep);
-
-
-
 
