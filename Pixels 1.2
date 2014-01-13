@@ -156,11 +156,11 @@ testc(Test1*W2,{pznclass3,linclass3,nmclass3,knnclass3,perlclass3});
 %*********
 %Stacked**
 %*********
-display('Stacking LDC, Parzen and Fisher');
-S32_1=f*ldc*classc;
+display('Stacking Parzen and Fisher');
+% S32_1=f*perlc*classc;
 S32_2=f*fisherc*classc;
 S32_3=f*parzenc*classc;
-Stk2=[S32_3 S32_2 S32_1];
+Stk2=[S32_3 S32_2];% S32_1];
 Cmax2=Stk2*maxc;
 Cmin2=Stk2*minc;
 Cmean2=Stk2*meanc;
@@ -170,10 +170,10 @@ testc(Test1*W2,{Cmax2,Cmin2,Cmean2,Cprod2});
 %***********
 %Sequential*
 %***********
-display('Sequentially applying LCD, Parzen and Fisher');
-Seq32_1=ldc*classc*parzenc;
+display('Sequentially applying Perceptron, Parzen and Fisher');
+Seq32_1=perlc*classc*parzenc;
 Seq32_2=fisherc*classc*parzenc;
-prcrossval(f,{Seq32_1,Seq32_2},10,2); 
+prcrossval(f,{Seq32_2},10,2); 
 
 
 %% *******************
@@ -313,10 +313,10 @@ display('combining classfiers on the best performing PCA proyection');
 %*****************
 
 display('Stacking LDC, Parzen and Fisher for a small class case, after PCA64');
-StSC_1=g*ldc*classc;
-StSC_2=g*fisherc*classc;
-StSC_3=g*parzenc*classc;
-Stk3=[StSC_1 StSC_2 StSC_3];
+% StSC_1=h*qdc*classc;
+StSC_2=h*fisherc*classc;
+StSC_3=h*parzenc*classc;
+Stk3=[StSC_3 StSC_2];% StSC_1];
 Cmax3=Stk3*maxc;
 Cmin3=Stk3*minc;
 Cmean3=Stk3*meanc;
@@ -328,10 +328,10 @@ testc(TeSC1*W8,{Cmax3,Cmin3,Cmean3,Cprod3});
 %Stacked, PCA32 **
 %*****************
 display('Stacking LDC, Parzen and Fisher for a small class case, after PCA32');
-StSC_4=i*ldc*classc;
+% StSC_4=i*qdc*classc;
 StSC_5=i*fisherc*classc;
 StSC_6=i*parzenc*classc;
-Stk4=[StSC_4 StSC_5 StSC_6];
+Stk4=[StSC_6 StSC_5];% StSC_4];
 Cmax4=Stk4*maxc;
 Cmin4=Stk4*minc;
 Cmean4=Stk4*meanc;
