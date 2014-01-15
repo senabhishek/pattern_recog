@@ -1,0 +1,48 @@
+%% ******************************************************************
+% Pattern recognition project
+% Using pixel space as feature space, projected on a 64 feature space
+%         
+%              -Large classes
+% MG,AS,RS  
+% 2013-2014, Delft TU
+% *******************************************************************
+%% ************************
+%prnist with large classes*
+%**************************
+
+a=prnist([0:9],[1:1000]); %choose a large class size (more than 200 objects per class
+b=im_box(a,1,0); %add box surrounding all digits to enable the same number
+                 %of features on all images
+c=im_resize(b,[32 32]);  %resize all the data to 32 pixels (32^2 features), 
+                         %feature extraction needed
+
+d=prdataset(c); %working dataset
+nrep = 4; %number of repetitions for the classifier evaluations.
+[Train,Test]=gendat(d,0.5); %data set split
+
+dSc2=Train*scalem(Train,'variance');%scaling of the features
+[W2,frac2]=pcam(dSc2,32); %PCA on the original dataset. 
+f=Train*W2; %projecting d on W1 for dim reduction
+PznLC=parzenc(f);%parzen classifier
+
+display('Parzen, PCA 32');
+testc(Test*W2,{PznLC});
+
+%% ************************
+%prnist with small classes*
+%**************************
+
+SDS1=prnist([0:9],[1:200]);
+SDS1=im_box(SDS1,1,0); 
+SDS1=im_resize(SDS1,[32 32]);  
+SDS1=prdataset(SDS1); %Test dataset
+
+[TraSC,TeSC]=gendat(SDS1,0.05);%split data set
+
+Knn1SC=knnc(TraSC,1); %k nearest neighboor
+Knn2SC=knnc(TraSC,2); 
+Knn6SC=knnc(TraSC,6);
+
+display('PCA 32');
+testc(TeSC,{Knn1SC,Knn2SC,Knn6SC}); 
+              
