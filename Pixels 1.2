@@ -1,5 +1,5 @@
 
-% ******************************************************
+%% ******************************************************
 % Pattern recognition project
 % Using pixel space as feature space in two scenarios:
 %         
@@ -7,7 +7,7 @@
 %         -Large classes
 % MG,AS,RS  
 % 2013-2014, Delft TU
-% ******************************************************
+% *******************************************************
 %% ************************
 %prnist with large classes*
 %**************************
@@ -44,35 +44,16 @@ improc=im_box([],1,1)*im_gauss([])*im_resize([],[32 32]);%all image mods
 %Supervised classification**
 %***************************
 
-%quadclass=qdc(d); %Quadratic Bayes
+quadclass=qdc(d); %Quadratic Bayes
 linclass=ldc(Train); %Linear Bayes
 nmclass=nmc(Train); %nearest mean
 knnclass=knnc(Train,5); %k nearest neighboor (k=10)
 pznclass=parzenc(Train);%parzen classifier
-%svmclass=svc(Train);%support vector machine
-
+perlclass=perlc(Train);
 %classifier evaluations
 
-Eqdc=cleval(Train,qdc,[32,64,128,len*0.5],nrep);
-%Eldc=cleval(Train,ldc,[32,64,128,len*0.5],nrep);
-Enmc=cleval(Train,nmc,[32,64,128,len*0.5],nrep);
-Eknn=cleval(Train,knnc,[32,64,128,len*0.5],nrep);
-Epzn=cleval(Train,parzenc,[32,64,128,len*0.5],nrep);
-%Esvc=cleval(Train,svc,[32,64,128,len*0.5],nrep);
-
-
-
-%Using testc to assess error. 
 display('No dim reduction');
-testc(Test,{linclass,nmclass,pznclass});
-%{
-[Eqdc1,C1] = testc(Train,quadclass);
-[Eldc1,C2] = testc(Train,linclass);
-[Enmc1,C3] = testc(Train,nmclass);
-[Eknn1,C4] = testc(Train,knnclass);
-[Epzn1,C5] = testc(Train,pznclass);
-[Esvc1,C6] = testc(Train,svmclass);
-%}
+err1=testc(Test,{quadclass,linclass,nmclass,knnclass,pznclass,perlclass});
 
 
 %% ******************* 
@@ -93,19 +74,11 @@ nmclass2=nmc(e); %nearest mean
 knnclass2=knnc(e,5); %k nearest neighboor
 pznclass2=parzenc(e);%parzen classifier
 perlclass2=perlc(e); %linear perceptron
-%svmclass2=svc(e);%support vector machine
-Test1=Test*scalem(Train,'variance');
 
 %classifier evaluations
-% 
-% Eqdc2=cleval(e,qdc,[32,64,128,256,len*0.5],nrep);
-% Eldc2=cleval(e,ldc,[32,64,128,256,len*0.5],nrep);
-% Enmc2=cleval(e,nmc,[32,64,128,256,len*0.5],nrep);
-% Eknn2=cleval(e,knnc,[32,64,128,256,len*0.5],nrep);
-% Epzn2=cleval(e,parzenc,[32,64,128,256,len*0.5],nrep);
-%Esvc2=cleval(e,svc,[32,64,128,256,len*0.5],nrep);
+
 display('PCA 64');
-testc(Test*W1,{pznclass2,linclass2,nmclass2,knnclass2,perlclass2});
+err2=testc(Test*W1,{quadclass2,linclass2,nmclass2,knnclass2,pznclass2,perlclass2});
 %************************************************
 % Performing classifier combinations after PCA64*
 %************************************************
@@ -114,14 +87,13 @@ testc(Test*W1,{pznclass2,linclass2,nmclass2,knnclass2,perlclass2});
 %*********
 display('Stacking LDC, Fisher and Parzen');
 S64_1=e*ldc*classc;
-%S64_2=e*fisherc*classc;
 S64_3=e*parzenc*classc;
 Stk1=[S64_1 S64_3];
 Cmax1=Stk1*maxc;
 Cmin1=Stk1*minc;
 Cmean1=Stk1*meanc;
 Cprod1=Stk1*prodc;
-testc(Test1*W1,{Cmax1,Cmin1,Cmean1,Cprod1});
+testc(Test*W1,{Cmax1,Cmin1,Cmean1,Cprod1});
 %***********
 %Sequential*
 %***********
@@ -143,7 +115,7 @@ pznclass3=parzenc(f);%parzen classifier
 perlclass3=perlc(f); %linear perceptron
 
 display('PCA 32');
-testc(Test1*W2,{pznclass3,linclass3,nmclass3,knnclass3,perlclass3});
+err3=testc(Test*W2,{quadclass3,linclass3,nmclass3,knnclass3,pznclass3,perlclass3});
 %it's possible that a projection to a
 %32 dim subspace leaves out important
 %information; by looking at the 
@@ -165,7 +137,7 @@ Cmax2=Stk2*maxc;
 Cmin2=Stk2*minc;
 Cmean2=Stk2*meanc;
 Cprod2=Stk2*prodc;
-testc(Test1*W2,{Cmax2,Cmin2,Cmean2,Cprod2});
+testc(Test*W2,{Cmax2,Cmin2,Cmean2,Cprod2});
 
 %***********
 %Sequential*
@@ -191,18 +163,20 @@ perlclass4=perlc(g); %linear perceptron
 %classifier evaluations
 
 display('PCA 16');
-testc(Test1*W3,{pznclass4,linclass4,nmclass4,knnclass4,perlclass4});
+err4=testc(Test*W3,{quadclass4,linclass4,nmclass4,knnclass4,pznclass4,perlclass4});
 %% *****************
 % Error gathering***
 %*******************
 
-errors=testc;
+errorsLC={err1 err2 err3 err4};
 
+
+%% *********************************************************************
 %% *********************************************************************
 %New test set from nist dataset using smaller class sizes(SmallDataSet)*
 %***********************************************************************
 
-SDS1=prnist([0:9],[1:8]);
+SDS1=prnist([0:9],[1:200]);
 figure(4);
 show(SDS1);
 pause(5);
@@ -221,18 +195,19 @@ pause(5);
 close figure 6;
 SDS1=prdataset(SDS1); %Test dataset
 
-[TraSC,TeSC]=gendat(SDS1,0.5);%split data set
+[TraSC,TeSC]=gendat(SDS1,0.05);%split data set
 
 quadclass5=qdc(TraSC); %Quadratic Bayes
 linclass5=ldc(TraSC); %Linear Bayes
 nmclass5=nmc(TraSC); %nearest mean
-knnclass5_2=knnc(TraSC,2); %k nearest neighboor
-knnclass5_4=knnc(TraSC,4); 
+knnclass5_1=knnc(TraSC,1); %k nearest neighboor
+knnclass5_2=knnc(TraSC,2); 
 knnclass5_6=knnc(TraSC,6);
 pznclass5=parzenc(TraSC);%parzen classifier
 perlclass5=perlc(TraSC);%perceptron
+svcclass5=svc(TraSC);
 
-testc(TeSC,{quadclass5,linclass5,knnclass5_2,knnclass5_2,knnclass5_6}); 
+err5=testc(TeSC,{quadclass5,svcclass5,linclass5,knnclass5_1,knnclass5_2,knnclass5_6,nmclass5,perlclass5}); 
                                               %The error obtained here,
                                               %without projecting the
                                               %highly dimensional space is
@@ -257,14 +232,14 @@ h=TraSC1*W8;
 quadclass6=qdc(h); %Quadratic Bayes
 linclass6=ldc(h); %Linear Bayes
 nmclass6=nmc(h); %nearest mean
-knnclass6=knnc(h,5); %k nearest neighboor 
+knnclass6=knnc(h,2); %k nearest neighboor 
 pznclass6=parzenc(h);%parzen classifier
 perlclass6=perlc(h); %linear perceptron
-TeSC1=TeSC*scalem(TeSC,'variance');
+svcclass6=svc(h); %support vector machine
 
 display('PCA 64 on small class');
 
-testc(TeSC1*W8,{quadclass6,linclass6,knnclass6,pznclass6,perlclass6});
+err6=testc(TeSC*W8,{quadclass6,linclass6,knnclass6,pznclass6,perlclass6,svcclass6});
 
 
 
@@ -277,13 +252,14 @@ i=TraSC1*W9;
 quadclass7=qdc(i);
 linclass7=ldc(i);
 nmclass7=nmc(i);
-knnclass7=knnc(i,4);
+knnclass7=knnc(i,2);
 pznclass7=parzenc(i);
 perlclass7=perlc(i);
+svcclass7=svc(i);
 
 display('PCA 32 on small class');
 
-testc(TeSC1*W9,{quadclass7,linclass7,knnclass7,pznclass7,perlclass7,nmclass7});
+err7=testc(TeSC*W9,{quadclass7,linclass7,knnclass7,pznclass7,perlclass7,nmclass7,svcclass7});
 
 %**********
 % PCA 16 **
@@ -294,13 +270,14 @@ j=TraSC1*W10;
 quadclass8=qdc(j);
 linclass8=ldc(j);
 nmclass8=nmc(j);
-knnclass8=knnc(j,4);
+knnclass8=knnc(j,2);
 pznclass8=parzenc(j);
 perlclas8=perlc(j);
+svcclass8=svc(j);
 
 display('PCA 16 on small class');
 
-testc(TeSC1*W10,{quadclass8,linclass8,knnclass8,pznclass8,perlclas8});
+err8=testc(TeSC*W10,{quadclass8,linclass8,knnclass8,pznclass8,perlclas8,svcclass8});
 
 %*********************************************
 % Classifier combinations for small classes **
@@ -321,7 +298,7 @@ Cmax3=Stk3*maxc;
 Cmin3=Stk3*minc;
 Cmean3=Stk3*meanc;
 Cprod3=Stk3*prodc;
-testc(TeSC1*W8,{Cmax3,Cmin3,Cmean3,Cprod3});
+err9=testc(TeSC*W8,{Cmax3,Cmin3,Cmean3,Cprod3});
 
 
 %*****************
@@ -336,4 +313,11 @@ Cmax4=Stk4*maxc;
 Cmin4=Stk4*minc;
 Cmean4=Stk4*meanc;
 Cprod4=Stk4*prodc;
-testc(TeSC1*W9,{Cmax4,Cmin4,Cmean4,Cprod4});
+err10=testc(TeSC*W9,{Cmax4,Cmin4,Cmean4,Cprod4});
+
+%% ***********************************
+% Error gathering for small classes***
+%*************************************
+
+errorsSC={err5 err6 err7 err8};
+
